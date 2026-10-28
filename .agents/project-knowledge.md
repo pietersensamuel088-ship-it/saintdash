@@ -48,7 +48,10 @@
 
 ## 6. Current Progress & Roadmap
 - [x] Initial project interview & architecture design
-- [ ] Backend FastAPI implementation & mock/live Proxmox service
-- [ ] Frontend React + Tailwind UI with Impeccable telemetry theme
-- [ ] Verification with tests & linter
-- [ ] Docker packaging & deployment guide
+- [x] Backend FastAPI implementation & mock/live Proxmox service
+- [x] Frontend React + Tailwind UI with Impeccable telemetry theme
+- [x] Verification with tests & linter (7 passing unit tests, 0 design anti-patterns)
+- [x] Docker packaging & deployment guide
+- [x] Custom wallpaper & translucent gaming BattleStation HUD
+- [x] Synthesized Web Audio API sound effects & interactive ping tester
+- [x] Interactive container inspector & reload action modal
