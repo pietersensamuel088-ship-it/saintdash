@@ -1,0 +1,42 @@
+services:
+  saintdash:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: saintdash-monitor
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - HOST=0.0.0.0
+      - DASHBOARD_PASSWORD=${DASHBOARD_PASSWORD:-admin123}
+      - JWT_SECRET=${JWT_SECRET:-saintdash-super-secret-key-change-me}
+      - JWT_EXPIRE_HOURS=${JWT_EXPIRE_HOURS:-72}
+      - PROXMOX_HOST=${PROXMOX_HOST}
+      - PROXMOX_USER=${PROXMOX_USER}
+      - PROXMOX_TOKEN_NAME=${PROXMOX_TOKEN_NAME}
+      - PROXMOX_TOKEN_VALUE=${PROXMOX_TOKEN_VALUE}
+      - PROXMOX_VERIFY_SSL=${PROXMOX_VERIFY_SSL:-false}
+      - DOCKER_HOST_SOCKET=unix:///var/run/docker.sock
+      - DOCKER_ENABLED=true
+      - DATABASE_URL=${DATABASE_URL}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+    volumes:
+      # Mount Docker socket so SaintDash can monitor container states on this host
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    env_file:
+      - path: .env
+        required: false
+
+  # Optional Cloudflare Tunnel for secure HTTPS access via your custom domain later
+  # cloudflared:
+  #   image: cloudflare/cloudflared:latest
+  #   container_name: saintdash-cloudflared
+  #   restart: unless-stopped
+  #   command: tunnel run
+  #   environment:
+  #     - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+  #   depends_on:
+  #     - saintdash
