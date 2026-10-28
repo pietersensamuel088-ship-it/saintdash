@@ -7,6 +7,7 @@ import {
   VolumeX,
   Gauge,
   Trophy,
+  Bot,
 } from 'lucide-react';
 import type { ClusterSummary } from '../types';
 import { sfx } from '../utils/audio';
@@ -15,12 +16,16 @@ interface BattleStationBarProps {
   summary: ClusterSummary | null;
   audioEnabled: boolean;
   onToggleAudio: () => void;
+  botsCount?: number;
+  onlineBotsCount?: number;
 }
 
 export const BattleStationBar: React.FC<BattleStationBarProps> = ({
   summary,
   audioEnabled,
   onToggleAudio,
+  botsCount = 4,
+  onlineBotsCount = 4,
 }) => {
   const [pingMs, setPingMs] = useState<number>(0.8);
   const [pinging, setPinging] = useState<boolean>(false);
@@ -130,6 +135,17 @@ export const BattleStationBar: React.FC<BattleStationBarProps> = ({
           <div className="flex flex-col text-[10px]">
             <span className="text-slate-400">CORE THERMAL</span>
             <span className="font-bold text-amber-300 font-mono">46.5°C // 1850 RPM</span>
+          </div>
+        </div>
+
+        {/* Discord Bots Fleet */}
+        <div className="flex items-center gap-2 px-2.5 py-1 rounded bg-black/40 border border-cyan-900/40">
+          <Bot className="w-3.5 h-3.5 text-cyan-400" />
+          <div className="flex flex-col text-[10px]">
+            <span className="text-slate-400">DISCORD BOTS</span>
+            <span className="font-bold text-emerald-400 font-mono">
+              {onlineBotsCount}/{botsCount} ONLINE
+            </span>
           </div>
         </div>
 

@@ -118,3 +118,18 @@ export interface StoragePool {
   active: number;
   enabled: number;
 }
+
+export interface DiscordBot {
+  id: string;
+  name: string;
+  status: 'online' | 'offline' | 'idle';
+  type: string;
+  uptime: string;
+  memory_mb: number;
+  ping_ms: number;
+  guilds?: number;
+  prefix?: string;
+  version?: string;
+  avatar_url?: string;
+  tag?: string;
+}

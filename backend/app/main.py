@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from backend.app.routers import auth, proxmox, docker_router, database_router, diagnostics
+from backend.app.routers import auth, proxmox, docker_router, database_router, diagnostics, bots_router
 from backend.app.config import settings
 
 app = FastAPI(
@@ -28,6 +28,7 @@ app.include_router(proxmox.router)
 app.include_router(docker_router.router)
 app.include_router(database_router.router)
 app.include_router(diagnostics.router)
+app.include_router(bots_router.router)
 
 # Serve built frontend in production if dist directory exists
 FRONTEND_DIST = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"

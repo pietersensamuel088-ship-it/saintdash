@@ -1,6 +1,7 @@
 import type {
   ClusterSummary,
   DatabaseMetrics,
+  DiscordBot,
   ProxmoxNode,
   RrdTelemetryPoint,
   StoragePool,
@@ -104,6 +105,16 @@ class ApiService {
 
   async getStorage(node: string = 'pve'): Promise<StoragePool[]> {
     return this.request(`/api/proxmox/storage?node=${node}`);
+  }
+
+  async getBots(): Promise<DiscordBot[]> {
+    return this.request('/api/bots');
+  }
+
+  async restartBot(botId: string): Promise<{ success: boolean; message: string }> {
+    return this.request(`/api/bots/${botId}/restart`, {
+      method: 'POST',
+    });
   }
 
   async testProxmoxConnection(): Promise<{ success: boolean; message: string; version?: string; is_mock?: boolean }> {

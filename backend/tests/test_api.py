@@ -78,3 +78,22 @@ def test_frontend_spa_serving():
     resp = client.get("/")
     assert resp.status_code == 200
 
+def test_discord_bots_endpoint():
+    login_resp = client.post("/api/auth/login", json={"password": settings.DASHBOARD_PASSWORD})
+    token = login_resp.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    resp = client.get("/api/bots", headers=headers)
+    assert resp.status_code == 200
+    bots = resp.json()
+    assert isinstance(bots, list)
+    assert len(bots) >= 4
+    assert "status" in bots[0]
+    assert "uptime" in bots[0]
+    assert "memory_mb" in bots[0]
+
+    # Test restart
+    restart_resp = client.post(f"/api/bots/{bots[0]['id']}/restart", headers=headers)
+    assert restart_resp.status_code == 200
+    assert restart_resp.json()["success"] is True
+

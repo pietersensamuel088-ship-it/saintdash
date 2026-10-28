@@ -3,6 +3,7 @@ import { api } from './services/api';
 import type {
   ClusterSummary,
   DatabaseMetrics,
+  DiscordBot,
   ProxmoxNode,
   RrdTelemetryPoint,
   StoragePool,
@@ -15,6 +16,7 @@ import { WorkloadTable } from './components/WorkloadTable';
 import { TelemetryCharts } from './components/TelemetryCharts';
 import { DatabaseSection } from './components/DatabaseSection';
 import { StorageSection } from './components/StorageSection';
+import { DiscordBotSection } from './components/DiscordBotSection';
 import { LoginModal } from './components/LoginModal';
 import { SettingsModal } from './components/SettingsModal';
 import { sfx } from './utils/audio';
@@ -28,10 +30,11 @@ export const App: React.FC = () => {
   const [rrdData, setRrdData] = useState<RrdTelemetryPoint[]>([]);
   const [dbMetrics, setDbMetrics] = useState<DatabaseMetrics | null>(null);
   const [storage, setStorage] = useState<StoragePool[]>([]);
+  const [bots, setBots] = useState<DiscordBot[]>([]);
   const [timeframe, setTimeframe] = useState<string>('hour');
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<'workloads' | 'database' | 'storage'>('workloads');
+  const [activeTab, setActiveTab] = useState<'workloads' | 'bots' | 'database' | 'storage'>('workloads');
   const [audioEnabled, setAudioEnabled] = useState<boolean>(false);
 
   // Sync audio toggle with sfx helper
@@ -65,6 +68,7 @@ export const App: React.FC = () => {
         rrdRes,
         dbRes,
         storageRes,
+        botsRes,
       ] = await Promise.allSettled([
         api.getSummary(),
         api.getNodes(),
@@ -74,6 +78,7 @@ export const App: React.FC = () => {
         api.getRrd(selectedNode === 'all' ? 'pve' : selectedNode, timeframe),
         api.getDatabaseMetrics(),
         api.getStorage(selectedNode === 'all' ? 'pve' : selectedNode),
+        api.getBots(),
       ]);
 
       if (summaryRes.status === 'fulfilled') setSummary(summaryRes.value);
@@ -81,6 +86,7 @@ export const App: React.FC = () => {
       if (rrdRes.status === 'fulfilled') setRrdData(rrdRes.value);
       if (dbRes.status === 'fulfilled') setDbMetrics(dbRes.value);
       if (storageRes.status === 'fulfilled') setStorage(storageRes.value);
+      if (botsRes.status === 'fulfilled') setBots(botsRes.value);
 
       // Consolidate workloads
       const allWorkloads: WorkloadItem[] = [];
@@ -147,6 +153,8 @@ export const App: React.FC = () => {
             summary={summary}
             audioEnabled={audioEnabled}
             onToggleAudio={handleToggleAudio}
+            botsCount={bots.length}
+            onlineBotsCount={bots.filter((b) => b.status === 'online').length}
           />
 
           {/* Top Section: Overview with Gauges */}
@@ -154,7 +162,7 @@ export const App: React.FC = () => {
 
           {/* View Switcher Tabs */}
           <div className="flex items-center justify-between border-b border-cyan-500/20 pb-2">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={() => {
                   sfx.playClick();
@@ -166,7 +174,20 @@ export const App: React.FC = () => {
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                Workload Squadron ({workloads.length})
+                Workloads ({workloads.length})
+              </button>
+              <button
+                onClick={() => {
+                  sfx.playClick();
+                  setActiveTab('bots');
+                }}
+                className={`px-3 py-1 rounded text-xs font-bold tracking-wide uppercase font-mono transition-colors ${
+                  activeTab === 'bots'
+                    ? 'bg-purple-600/30 text-purple-300 border border-purple-500/50 shadow-[0_0_10px_rgba(168,85,247,0.3)]'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                Discord Bots ({bots.length})
               </button>
               <button
                 onClick={() => {
@@ -206,6 +227,10 @@ export const App: React.FC = () => {
           {/* Active Tab Panel */}
           {activeTab === 'workloads' && (
             <WorkloadTable workloads={workloads} selectedNode={selectedNode} />
+          )}
+
+          {activeTab === 'bots' && (
+            <DiscordBotSection bots={bots} onRefresh={loadDashboardData} />
           )}
 
           {activeTab === 'database' && (

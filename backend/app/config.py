@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     SUPABASE_URL: Optional[str] = None
     SUPABASE_SERVICE_ROLE_KEY: Optional[str] = None
 
+    # Discord Bots
+    DISCORD_BOT_TOKENS: Optional[str] = None
+
     # App
     PORT: int = 8000
     HOST: str = "0.0.0.0"
