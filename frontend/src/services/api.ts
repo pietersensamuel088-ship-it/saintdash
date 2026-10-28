@@ -124,6 +124,13 @@ class ApiService {
     });
   }
 
+  async syncBotTokens(tokens: string[]): Promise<{ success: boolean; message: string }> {
+    return this.request('/api/bots/sync-tokens', {
+      method: 'POST',
+      body: JSON.stringify({ tokens }),
+    });
+  }
+
   async testProxmoxConnection(): Promise<{ success: boolean; message: string; version?: string; is_mock?: boolean }> {
     return this.request('/api/diagnostics/proxmox');
   }
