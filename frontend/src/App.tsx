@@ -9,6 +9,7 @@ import type {
   WorkloadItem,
 } from './types';
 import { Header } from './components/Header';
+import { BattleStationBar } from './components/BattleStationBar';
 import { OverviewMetrics } from './components/OverviewMetrics';
 import { WorkloadTable } from './components/WorkloadTable';
 import { TelemetryCharts } from './components/TelemetryCharts';
@@ -16,6 +17,7 @@ import { DatabaseSection } from './components/DatabaseSection';
 import { StorageSection } from './components/StorageSection';
 import { LoginModal } from './components/LoginModal';
 import { SettingsModal } from './components/SettingsModal';
+import { sfx } from './utils/audio';
 
 export const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(api.hasToken());
@@ -30,6 +32,17 @@ export const App: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'workloads' | 'database' | 'storage'>('workloads');
+  const [audioEnabled, setAudioEnabled] = useState<boolean>(false);
+
+  // Sync audio toggle with sfx helper
+  const handleToggleAudio = () => {
+    const nextState = !audioEnabled;
+    setAudioEnabled(nextState);
+    sfx.enabled = nextState;
+    if (nextState) {
+      sfx.playBeep();
+    }
+  };
 
   // Listen for 401 events
   useEffect(() => {
@@ -97,98 +110,127 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-canvas text-white flex flex-col font-sans selection:bg-cyan-500 selection:text-slate-950">
-      {/* Login Modal guard */}
-      {!isAuthenticated && (
-        <LoginModal onSuccess={() => setIsAuthenticated(true)} />
-      )}
-
-      {/* Main Top Header */}
-      <Header
-        nodes={nodes}
-        selectedNode={selectedNode}
-        onSelectNode={setSelectedNode}
-        onRefresh={loadDashboardData}
-        isRefreshing={isRefreshing}
-        onOpenSettings={() => setIsSettingsOpen(true)}
-        onLock={handleLock}
-        isLiveProxmox={summary?.is_live_proxmox ?? false}
+    <div className="relative min-h-screen text-white flex flex-col font-sans selection:bg-cyan-500 selection:text-slate-950 overflow-x-hidden">
+      {/* Dynamic Background Image with Vignette Overlay */}
+      <div
+        className="fixed inset-0 pointer-events-none z-0 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: `url('/wallpaper.jpg')`,
+        }}
       />
+      {/* Dark Tactical Vignette Overlay for Crisp Readability */}
+      <div className="fixed inset-0 pointer-events-none z-0 bg-gradient-to-b from-[#05070d]/85 via-[#080b15]/90 to-[#030408]/96 backdrop-blur-[1.5px]" />
 
-      {/* Main Dashboard Canvas */}
-      <main className="flex-1 max-w-[1600px] w-full mx-auto p-4 flex flex-col gap-5">
-        {/* Top Section: Overview with Gauges */}
-        <OverviewMetrics summary={summary} selectedNode={selectedNode} />
-
-        {/* View Switcher Tabs */}
-        <div className="flex items-center justify-between border-b border-canvas-border pb-2">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setActiveTab('workloads')}
-              className={`px-3 py-1 rounded text-xs font-semibold tracking-wide uppercase transition-colors ${
-                activeTab === 'workloads'
-                  ? 'bg-cyan-600/20 text-cyan-400 border border-cyan-500/40'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              Workloads &amp; Pods ({workloads.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('database')}
-              className={`px-3 py-1 rounded text-xs font-semibold tracking-wide uppercase transition-colors ${
-                activeTab === 'database'
-                  ? 'bg-purple-600/20 text-purple-400 border border-purple-500/40'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              Database &amp; Node Cluster
-            </button>
-            <button
-              onClick={() => setActiveTab('storage')}
-              className={`px-3 py-1 rounded text-xs font-semibold tracking-wide uppercase transition-colors ${
-                activeTab === 'storage'
-                  ? 'bg-amber-600/20 text-amber-400 border border-amber-500/40'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              Storage Volumes ({storage.length})
-            </button>
-          </div>
-
-          <div className="hidden sm:flex items-center gap-2 text-[11px] font-mono text-slate-500">
-            <span>Auto-poll: 30s</span>
-            <span>&middot;</span>
-            <span className="text-emerald-400">Node Link Active</span>
-          </div>
-        </div>
-
-        {/* Active Tab Panel */}
-        {activeTab === 'workloads' && (
-          <WorkloadTable workloads={workloads} selectedNode={selectedNode} />
+      {/* Main Content Container */}
+      <div className="relative z-10 flex flex-col min-h-screen">
+        {/* Login Modal guard */}
+        {!isAuthenticated && (
+          <LoginModal onSuccess={() => setIsAuthenticated(true)} />
         )}
 
-        {activeTab === 'database' && (
-          <DatabaseSection metrics={dbMetrics} />
-        )}
-
-        {activeTab === 'storage' && (
-          <StorageSection storage={storage} />
-        )}
-
-        {/* Mid Section: Real-Time Telemetry Charts (always visible like Grafana dashboard) */}
-        <TelemetryCharts
-          data={rrdData}
-          onTimeframeChange={setTimeframe}
-          currentTimeframe={timeframe}
+        {/* Main Top Header */}
+        <Header
+          nodes={nodes}
+          selectedNode={selectedNode}
+          onSelectNode={setSelectedNode}
+          onRefresh={loadDashboardData}
+          isRefreshing={isRefreshing}
+          onOpenSettings={() => setIsSettingsOpen(true)}
+          onLock={handleLock}
+          isLiveProxmox={summary?.is_live_proxmox ?? false}
         />
-      </main>
 
-      {/* Settings & Configuration Modal */}
-      <SettingsModal
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        isLiveProxmox={summary?.is_live_proxmox ?? false}
-      />
+        {/* Main Dashboard Canvas */}
+        <main className="flex-1 max-w-[1600px] w-full mx-auto p-4 flex flex-col gap-4">
+          {/* BattleStation RPG Stat Bar */}
+          <BattleStationBar
+            summary={summary}
+            audioEnabled={audioEnabled}
+            onToggleAudio={handleToggleAudio}
+          />
+
+          {/* Top Section: Overview with Gauges */}
+          <OverviewMetrics summary={summary} selectedNode={selectedNode} />
+
+          {/* View Switcher Tabs */}
+          <div className="flex items-center justify-between border-b border-cyan-500/20 pb-2">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  sfx.playClick();
+                  setActiveTab('workloads');
+                }}
+                className={`px-3 py-1 rounded text-xs font-bold tracking-wide uppercase font-mono transition-colors ${
+                  activeTab === 'workloads'
+                    ? 'bg-cyan-600/30 text-cyan-300 border border-cyan-500/50 shadow-[0_0_10px_rgba(6,182,212,0.3)]'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                Workload Squadron ({workloads.length})
+              </button>
+              <button
+                onClick={() => {
+                  sfx.playClick();
+                  setActiveTab('database');
+                }}
+                className={`px-3 py-1 rounded text-xs font-bold tracking-wide uppercase font-mono transition-colors ${
+                  activeTab === 'database'
+                    ? 'bg-blue-600/30 text-blue-300 border border-blue-500/50 shadow-[0_0_10px_rgba(59,130,246,0.3)]'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                Database Matrix
+              </button>
+              <button
+                onClick={() => {
+                  sfx.playClick();
+                  setActiveTab('storage');
+                }}
+                className={`px-3 py-1 rounded text-xs font-bold tracking-wide uppercase font-mono transition-colors ${
+                  activeTab === 'storage'
+                    ? 'bg-amber-600/30 text-amber-300 border border-amber-500/50 shadow-[0_0_10px_rgba(245,158,11,0.3)]'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                Storage Arrays ({storage.length})
+              </button>
+            </div>
+
+            <div className="hidden sm:flex items-center gap-2 text-[11px] font-mono text-slate-400">
+              <span>SCAN INTERVAL: 30s</span>
+              <span>&bull;</span>
+              <span className="text-emerald-400 font-bold">NODE TELEMETRY SECURE</span>
+            </div>
+          </div>
+
+          {/* Active Tab Panel */}
+          {activeTab === 'workloads' && (
+            <WorkloadTable workloads={workloads} selectedNode={selectedNode} />
+          )}
+
+          {activeTab === 'database' && (
+            <DatabaseSection metrics={dbMetrics} />
+          )}
+
+          {activeTab === 'storage' && (
+            <StorageSection storage={storage} />
+          )}
+
+          {/* Mid Section: Real-Time Telemetry Charts */}
+          <TelemetryCharts
+            data={rrdData}
+            onTimeframeChange={setTimeframe}
+            currentTimeframe={timeframe}
+          />
+        </main>
+
+        {/* Settings & Configuration Modal */}
+        <SettingsModal
+          isOpen={isSettingsOpen}
+          onClose={() => setIsSettingsOpen(false)}
+          isLiveProxmox={summary?.is_live_proxmox ?? false}
+        />
+      </div>
     </div>
   );
 };
