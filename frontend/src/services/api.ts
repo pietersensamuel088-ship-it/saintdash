@@ -117,6 +117,13 @@ class ApiService {
     });
   }
 
+  async updateBot(botId: string, name: string, tag: string): Promise<{ success: boolean }> {
+    return this.request(`/api/bots/${botId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ name, tag }),
+    });
+  }
+
   async testProxmoxConnection(): Promise<{ success: boolean; message: string; version?: string; is_mock?: boolean }> {
     return this.request('/api/diagnostics/proxmox');
   }

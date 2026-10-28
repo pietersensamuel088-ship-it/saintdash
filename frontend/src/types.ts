@@ -127,6 +127,9 @@ export interface DiscordBot {
   uptime: string;
   memory_mb: number;
   ping_ms: number;
+  host_vm?: string;
+  host_ip?: string;
+  vmid?: number;
   guilds?: number;
   prefix?: string;
   version?: string;
